@@ -27,7 +27,7 @@ Run `bash publish.sh` or build solution in any IDE. C# build will trigger C buil
 
 ## TODO
 
-* Port types from Beef-lang implementation
+* Port types from [Beef-lang implementation](https://github.com/rfg-modding/RfgNetworking)
 * Actually figure out how to hack netcode to avoid encryption and/or master server talk
 
 ## Notes
