@@ -1,4 +1,6 @@
 # /bin/bash -ex
+workdir=$(dirname "$0")
+pushd $workdir
 rm -rf _publish
 dotnet clean src
 dotnet publish src/SwApiNet -o _publish

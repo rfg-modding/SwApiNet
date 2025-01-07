@@ -1,16 +1,16 @@
-namespace SwApiNet;
+namespace SwApiNet.Wrappers;
 
 /// <summary>
 /// Logs call details
 /// </summary>
 /// <param name="target"></param>
-public class LogSwApi(ISwApi target) : ISwApi
+public class MethodLogWrapper(IWrapper target) : IWrapper
 {
     private readonly bool muteProcessApiCb = true;
     private readonly bool logDynamicInitOnce = true;
     private bool dynamicInitCalled;
 
-    public unsafe int* CreateInternalModule(byte* cStringPtr)
+    public nint CreateInternalModule(nint cStringPtr)
     {
         Utils.LogMethodBuffered();
         return target.CreateInternalModule(cStringPtr);
@@ -19,37 +19,34 @@ public class LogSwApi(ISwApi target) : ISwApi
     /// <summary>
     /// Log once and avoid spam because real method doesn't do anything after first call
     /// </summary>
-    public unsafe int* DynamicInit(int* callbackCounterAndContextPtr)
+    public nint DynamicInit(nint callbackCounterAndContextPtr)
     {
         var skip = logDynamicInitOnce && dynamicInitCalled;
-        if (!skip)
-        {
-            Utils.LogMethodBuffered();
-        }
+        if (!skip) Utils.LogMethodBuffered();
 
         dynamicInitCalled = true;
         return target.DynamicInit(callbackCounterAndContextPtr);
     }
 
-    public unsafe int* GetPInterface()
+    public nint GetPInterface()
     {
         Utils.LogMethodBuffered();
         return target.GetPInterface();
     }
 
-    public unsafe int* GetUInterface()
+    public nint GetUInterface()
     {
         Utils.LogMethodBuffered();
         return target.GetUInterface();
     }
 
-    public unsafe int Init()
+    public int Init()
     {
         Utils.LogMethodBuffered();
         return target.Init();
     }
 
-    public unsafe int* InitCallbackFunc(int* callbackFuncPtr, int callbackId)
+    public nint InitCallbackFunc(nint callbackFuncPtr, int callbackId)
     {
         Utils.LogMethodBuffered();
         return target.InitCallbackFunc(callbackFuncPtr, callbackId);
@@ -58,35 +55,32 @@ public class LogSwApi(ISwApi target) : ISwApi
     /// <summary>
     /// Do not log: called every frame
     /// </summary>
-    public unsafe void ProcessApiCb()
+    public void ProcessApiCb()
     {
-        if (!muteProcessApiCb)
-        {
-            Utils.LogMethodBuffered();
-        }
+        if (!muteProcessApiCb) Utils.LogMethodBuffered();
 
         target.ProcessApiCb();
     }
 
-    public unsafe void RegisterCallResult(int* cCallResultPtr, ulong maybeId)
+    public void RegisterCallResult(nint cCallResultPtr, ulong maybeId)
     {
         Utils.LogMethodBuffered();
         target.RegisterCallResult(cCallResultPtr, maybeId);
     }
 
-    public unsafe void RemoveCallbackFunc(int* callbackFuncPtr)
+    public void RemoveCallbackFunc(nint callbackFuncPtr)
     {
         Utils.LogMethodBuffered();
         target.RemoveCallbackFunc(callbackFuncPtr);
     }
 
-    public unsafe void Shutdown()
+    public void Shutdown()
     {
         Utils.LogMethodBuffered();
         target.Shutdown();
     }
 
-    public unsafe void UnregisterCallResult(int* cCallResultPtr, int* field1Ptr, int* field2Ptr)
+    public void UnregisterCallResult(nint cCallResultPtr, nint field1Ptr, nint field2Ptr)
     {
         Utils.LogMethodBuffered();
         target.UnregisterCallResult(cCallResultPtr, field1Ptr, field2Ptr);
@@ -95,7 +89,7 @@ public class LogSwApi(ISwApi target) : ISwApi
     /// <summary>
     /// Do not log: trivial call
     /// </summary>
-    public unsafe int ReturnFalse()
+    public int ReturnFalse()
     {
         return target.ReturnFalse();
     }

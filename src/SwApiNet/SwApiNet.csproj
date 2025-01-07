@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <EnableDynamicLoading>true</EnableDynamicLoading>
-    <DnneNativeBinaryName>sw_api</DnneNativeBinaryName>
-    <DnneAddGeneratedBinaryToProject>true</DnneAddGeneratedBinaryToProject>
-    <DnneWindowsExportsDef>exports.def</DnneWindowsExportsDef>
-    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <DnneNativeBinaryName>sw_api</DnneNativeBinaryName>
+        <DnneAddGeneratedBinaryToProject>true</DnneAddGeneratedBinaryToProject>
+        <DnneWindowsExportsDef>exports.def</DnneWindowsExportsDef>
+        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DNNE" Version="2.0.7" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="DNNE" Version="2.0.7"/>
+    </ItemGroup>
 
 </Project>
