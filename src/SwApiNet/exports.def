@@ -1,0 +1,15 @@
+EXPORTS
+	SW_CCSys_CreateInternalModule=SW_CCSys_CreateInternalModule
+	SW_CCSys_DynamicInit=SW_CCSys_DynamicInit
+	SW_CCSys_GetPInterface=SW_CCSys_GetPInterface
+	SW_CCSys_GetUInterface=SW_CCSys_GetUInterface
+	SW_CCSys_Init=SW_CCSys_Init
+	SW_CCSys_InitCallbackFunc=SW_CCSys_InitCallbackFunc
+	SW_CCSys_ProcessApiCb=SW_CCSys_ProcessApiCb
+	SW_CCSys_RegisterCallResult=SW_CCSys_RegisterCallResult
+	SW_CCSys_RemoveCallbackFunc=SW_CCSys_RemoveCallbackFunc
+	SW_CCSys_Shutdown=SW_CCSys_Shutdown
+	SW_CCSys_UnregisterCallResult=SW_CCSys_UnregisterCallResult
+	SW_HasAchievements=SW_HasAchievements
+	SW_HasInvites=SW_HasAchievements
+	SW_HasLeaderboards=SW_HasAchievements
