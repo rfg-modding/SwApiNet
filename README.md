@@ -16,6 +16,8 @@ Run `bash publish.sh` or build solution in any IDE. C# build will trigger C buil
 
 ## Usage
 
+All this is automated, run `bash publish.sh`. If RFG is not in default folder, edit this script accordingly.
+
 * rename original `sw_api.dll` to `sw_api_original.dll`
 * copy build results to RFG folder
   * `sw_api.dll` - proxy dll

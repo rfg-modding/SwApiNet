@@ -5,7 +5,7 @@ namespace SwApiNet;
 
 public static class Utils
 {
-    public static void LogMethod([CallerMemberName] string method = null)
+    public static void LogMethodBuffered([CallerMemberName] string method = null)
     {
         lock (Locker)
         {
