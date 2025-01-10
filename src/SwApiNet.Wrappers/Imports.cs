@@ -1,12 +1,13 @@
-using System;
 using System.Runtime.InteropServices;
+using SwApiNet.Wrappers.Dll;
+using SwApiNet.Wrappers.Models;
 
-namespace SwApiNet;
+namespace SwApiNet.Wrappers;
 
 public static class Imports
 {
     [DllImport("sw_api_original.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern nint SW_CCSys_CreateInternalModule(nint x);
+    public static extern unsafe SteamClient* SW_CCSys_CreateInternalModule(nint x);
 
     [DllImport("sw_api_original.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern nint SW_CCSys_DynamicInit(nint x);

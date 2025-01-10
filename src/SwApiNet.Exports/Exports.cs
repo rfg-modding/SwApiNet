@@ -1,7 +1,6 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using SwApiNet.Wrappers;
+using SwApiNet.Wrappers.Dll;
 
 namespace SwApiNet;
 
@@ -46,21 +45,24 @@ public static class Exports
     /// </summary>
     /// <returns>bool is not blittable, have to return int</returns>
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    public static int SW_HasAchievements() => Target.ReturnFalse();
+    public static int SW_HasAchievements() => Target.CFalse();
 
     /// <summary>
     /// Can ignore proxying, just return false
     /// </summary>
     /// <returns>bool is not blittable, have to return int</returns>
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    public static int SW_HasInvites() => Target.ReturnFalse();
+    public static int SW_HasInvites() => Target.CFalse();
 
     /// <summary>
     /// Ignore any logic, just return false
     /// </summary>
     /// <returns>bool is not blittable, have to return int</returns>
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    public static int SW_HasLeaderboards() => Target.ReturnFalse();
+    public static int SW_HasLeaderboards() => Target.CFalse();
 
-    private static readonly IWrapper Target = new ExceptionLogWrapper(new MethodLogWrapper(new TestWrapper()));
+    /// <summary>
+    /// Chain of wrappers to call
+    /// </summary>
+    private static readonly IWrapper Target = new LogWrapper(new InterceptWrapper());
 }

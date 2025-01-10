@@ -1,4 +1,4 @@
-namespace SwApiNet.Wrappers;
+namespace SwApiNet.Wrappers.Dll;
 
 public interface IWrapper
 {
@@ -33,5 +33,5 @@ public interface IWrapper
     /// Ignore any logic, just return false
     /// </summary>
     /// <returns>bool is not blittable, have to return int</returns>
-    int ReturnFalse();
+    int CFalse();
 }

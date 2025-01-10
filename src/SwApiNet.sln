@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33120.50
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SwApiNet", "SwApiNet\SwApiNet.csproj", "{375C3715-030A-45FA-BD6B-A545E18CD2E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SwApiNet.Exports", "SwApiNet.Exports\SwApiNet.Exports.csproj", "{375C3715-030A-45FA-BD6B-A545E18CD2E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwApiNet.Wrappers", "SwApiNet.Wrappers\SwApiNet.Wrappers.csproj", "{97BA636A-CF2C-4E20-AA44-551650AF2701}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwApiNet.Codegen", "SwApiNet.Codegen\SwApiNet.Codegen.csproj", "{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{375C3715-030A-45FA-BD6B-A545E18CD2E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{375C3715-030A-45FA-BD6B-A545E18CD2E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{375C3715-030A-45FA-BD6B-A545E18CD2E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97BA636A-CF2C-4E20-AA44-551650AF2701}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97BA636A-CF2C-4E20-AA44-551650AF2701}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97BA636A-CF2C-4E20-AA44-551650AF2701}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97BA636A-CF2C-4E20-AA44-551650AF2701}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

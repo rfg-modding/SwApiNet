@@ -3,7 +3,7 @@ workdir=$(dirname "$0")
 pushd $workdir
 rm -rf _publish
 dotnet clean src
-dotnet publish src/SwApiNet -o _publish
+dotnet publish src/SwApiNet.sln -o _publish
 
 rfg_path='/c/Program Files (x86)/Steam/steamapps/common/Red Faction Guerrilla Re-MARS-tered'
 dll="$rfg_path/sw_api.dll"
@@ -28,5 +28,7 @@ if [ $original_hash != $gog_dll_hash ]; then
     exit 1
 fi
 
+rm "$rfg_path/sw_api.dll"
+rm "$rfg_path/SwApiNet.*"
 cp _publish/* "$rfg_path"
 echo "Copied build to $rfg_path"

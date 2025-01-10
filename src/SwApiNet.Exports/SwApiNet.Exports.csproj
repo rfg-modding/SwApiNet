@@ -7,11 +7,15 @@
         <DnneAddGeneratedBinaryToProject>true</DnneAddGeneratedBinaryToProject>
         <DnneWindowsExportsDef>exports.def</DnneWindowsExportsDef>
         <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>SwApiNet</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="DNNE" Version="2.0.7"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SwApiNet.Wrappers\SwApiNet.Wrappers.csproj" />
     </ItemGroup>
 
 </Project>

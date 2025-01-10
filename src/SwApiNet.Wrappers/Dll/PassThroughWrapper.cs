@@ -1,11 +1,11 @@
-namespace SwApiNet.Wrappers;
+namespace SwApiNet.Wrappers.Dll;
 
 /// <summary>
 /// Calls methods from sw_api_original.dll
 /// </summary>
-public class ProxyWrapper : IWrapper
+public unsafe class PassThroughWrapper : IWrapper
 {
-    public nint CreateInternalModule(nint cStringPtr) => Imports.SW_CCSys_CreateInternalModule(cStringPtr);
+    public nint CreateInternalModule(nint cStringPtr) => (nint)Imports.SW_CCSys_CreateInternalModule(cStringPtr);
 
     public nint DynamicInit(nint callbackCounterAndContextPtr) => Imports.SW_CCSys_DynamicInit(callbackCounterAndContextPtr);
 
@@ -27,5 +27,5 @@ public class ProxyWrapper : IWrapper
 
     public void UnregisterCallResult(nint cCallResultPtr, nint field1Ptr, nint field2Ptr) => Imports.SW_CCSys_UnregisterCallResult(cCallResultPtr, field1Ptr, field2Ptr);
 
-    public int ReturnFalse() => 1;
+    public int CFalse() => 1;
 }
