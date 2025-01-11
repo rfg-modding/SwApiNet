@@ -2,11 +2,20 @@ using SwApiNet.Codegen;
 
 namespace SwApiNet.Wrappers.Models;
 
+/*
+generated from this interface:
+ * struct
+    * methods are wired to be called through .NET
+    * fields are a copy of original value, can be overwritten manually
+ * wrappers
+    * logging in/out/exceptions
+    * passthrough to real method
+    * place for user overridable logic, see SteamClientVTable.InterceptWrapper
+ * p/invoke static class wired to whatever needs be imported/exported
+*/
 [VTableProxy]
 public unsafe interface ISteamClientVTable
 {
-    //nint GetISteamApps(SteamClient* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
-    // actual fields, generate with Ptr suffix
     public nint UnusedCreateSteamPipe { get; }
     public nint UnusedBReleaseSteamPipe { get; }
     public nint UnusedConnectToGlobalUser { get; }

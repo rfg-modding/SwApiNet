@@ -10,5 +10,9 @@ public partial struct SteamClientVTable
             countGuard.Check(1);
             return base.GetISteamApps(thisPtr, user, pipe, versionStr);
         }
+
+        // override any methods here. by default they are called in a chain: intercept -> log -> passthrough to real
+        // properties are useful only for C#-to-C# calls. they can't be wired because they represent just a value in a struct field, not a function pointer
+
     }
 }
