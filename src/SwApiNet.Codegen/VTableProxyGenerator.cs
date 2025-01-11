@@ -228,7 +228,7 @@ public class VTableProxyAttribute: System.Attribute {}
                              // fields will be equal to values of real struct
                              // methods will point to fake exported delegates to call wrapper chain
                      {{interopInit}}
-                             // wire fake pointers
+                             // wire fake pointers and values
                      {{structPointersInit}}
                          }
                      
