@@ -3,7 +3,7 @@ namespace SwApiNet.Wrappers.Dll;
 /// <summary>
 /// Logs method call, return and CLR exceptions
 /// </summary>
-public class LogWrapper(IWrapper target) : IWrapper
+public class DllLogWrapper(IDllWrapper target) : IDllWrapper
 {
     private readonly bool muteProcessApiCb = true;
     private readonly bool logDynamicInitOnce = true;

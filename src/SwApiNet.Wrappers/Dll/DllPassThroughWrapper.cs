@@ -3,7 +3,7 @@ namespace SwApiNet.Wrappers.Dll;
 /// <summary>
 /// Calls methods from sw_api_original.dll
 /// </summary>
-public unsafe class PassThroughWrapper : IWrapper
+public unsafe class DllPassThroughWrapper : IDllWrapper
 {
     public nint CreateInternalModule(nint cStringPtr) => (nint)Imports.SW_CCSys_CreateInternalModule(cStringPtr);
 

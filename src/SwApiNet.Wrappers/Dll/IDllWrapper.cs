@@ -1,6 +1,6 @@
 namespace SwApiNet.Wrappers.Dll;
 
-public interface IWrapper
+public interface IDllWrapper
 {
     nint CreateInternalModule(nint cStringPtr);
 

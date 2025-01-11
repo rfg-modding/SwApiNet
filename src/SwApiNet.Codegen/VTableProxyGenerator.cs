@@ -238,25 +238,25 @@ public class VTableProxyAttribute: System.Attribute {}
                      {{structMethods}}
                      
                          /// <inheritdoc />
-                         public class LogWrapper({{data.InterfaceName}} target) : {{data.InterfaceName}}
+                         public partial class LogWrapper({{data.InterfaceName}} target) : {{data.InterfaceName}}
                          {
                      {{logMethods}}
                          }
                      
                          /// <inheritdoc />
-                         public class PassThroughWrapper() : {{data.InterfaceName}}
+                         public partial class PassThroughWrapper() : {{data.InterfaceName}}
                          {
                      {{passThroughMethods}}
                          }
                      
                          /// <inheritdoc />
-                         public class InterceptWrapperBase({{data.InterfaceName}} target) : {{data.InterfaceName}}
+                         public partial class InterceptWrapperBase({{data.InterfaceName}} target) : {{data.InterfaceName}}
                          {
                      {{interceptMethods}}
                          }
                      
                          /// <inheritdoc />
-                         public class InterceptWrapper({{data.InterfaceName}} target) : InterceptWrapperBase(target)
+                         public partial class InterceptWrapper({{data.InterfaceName}} target) : InterceptWrapperBase(target)
                          {
                              // write overrides manually here when needed
                          }
@@ -264,7 +264,7 @@ public class VTableProxyAttribute: System.Attribute {}
                          /// <summary>
                          /// Generated from <see cref="{{data.InterfaceName}}"/>
                          /// </summary>
-                         public static class Interop
+                         public static partial class Interop
                          {
                              public static {{data.InterfaceName}} Target { get; set; } = null!;
 

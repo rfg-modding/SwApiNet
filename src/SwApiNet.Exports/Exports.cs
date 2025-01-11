@@ -64,5 +64,5 @@ public static class Exports
     /// <summary>
     /// Chain of wrappers to call
     /// </summary>
-    private static readonly IWrapper Target = new LogWrapper(new InterceptWrapper());
+    private static readonly IDllWrapper Target = new DllLogWrapper(new DllInterceptWrapper());
 }

@@ -1,9 +1,9 @@
-# /bin/bash -ex
+# /bin/bash
 workdir=$(dirname "$0")
 pushd $workdir
 rm -rf _publish
-dotnet clean src
-dotnet publish src/SwApiNet.sln -o _publish
+# dotnet clean src # IDE goes haywire because of codegen
+dotnet publish src/SwApiNet.Exports -o _publish || exit 1
 
 rfg_path='/c/Program Files (x86)/Steam/steamapps/common/Red Faction Guerrilla Re-MARS-tered'
 dll="$rfg_path/sw_api.dll"
@@ -29,6 +29,6 @@ if [ $original_hash != $gog_dll_hash ]; then
 fi
 
 rm "$rfg_path/sw_api.dll"
-rm "$rfg_path/SwApiNet.*"
+find "$rfg_path" -maxdepth 1 -type f -name 'SwApiNet.*' -delete
 cp _publish/* "$rfg_path"
 echo "Copied build to $rfg_path"
