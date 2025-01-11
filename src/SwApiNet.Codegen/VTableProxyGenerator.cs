@@ -1,9 +1,11 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -25,7 +27,9 @@ public class VTableProxyGenerator : IIncrementalGenerator
             i.AddSource("VTableProxyAttribute.g.cs", attributeSource);
         });
 
-        var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SwApiNet.Codegen.VTableProxyAttribute", IsInterface, CollectData);
+        // does not work in tests:
+        //var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SwApiNet.Codegen.VTableProxyAttribute", IsInterface, CollectData);
+        var provider = context.SyntaxProvider.CreateSyntaxProvider(IsInterface, CollectData);
         context.RegisterSourceOutput(provider, Output);
 
         return;
@@ -55,7 +59,7 @@ public class VTableProxyGenerator : IIncrementalGenerator
         {
             return;
         }
-        context.AddSource(data.Name, "");
+        context.AddSource(data.Name, JsonSerializer.Serialize(data, new JsonSerializerOptions(){WriteIndented = true}));
     }
 
     private bool IsInterface(SyntaxNode node, CancellationToken token)
@@ -63,7 +67,44 @@ public class VTableProxyGenerator : IIncrementalGenerator
         return node is InterfaceDeclarationSyntax;
     }
 
-    [SuppressMessage("MicrosoftCodeAnalysisCorrectness", "RS1035:Do not use APIs banned for analyzers")]
+    private DataToGenerate? CollectData(GeneratorSyntaxContext context, CancellationToken token)
+    {
+        var declaredSymbol = context.SemanticModel.GetDeclaredSymbol(context.Node);
+        if (declaredSymbol is null)
+        {
+            return null;
+        }
+        if (declaredSymbol is not INamedTypeSymbol symbol)
+        {
+            return null;
+        }
+
+        if (!declaredSymbol.GetAttributes().Any(x => x.AttributeClass?.Name == "VTableProxy"))
+        {
+            return null;
+        }
+
+
+        var data = new DataToGenerate(symbol.Name, symbol.ContainingNamespace.ToString(), []);
+        var symbolMembers = symbol.GetMembers();
+        foreach (var x in symbolMembers)
+        {
+            if (x is IMethodSymbol method)
+            {
+                var args = new List<Arg>();
+                foreach (var methodParameter in method.Parameters)
+                {
+                    var type = methodParameter.Type.ToString();
+                    var name = methodParameter.Name;
+                    args.Add(new Arg(type, name));
+                }
+                data.Functions.Add(new Function(x.Name, args, method.ReturnType.ToString()));
+            }
+        }
+
+        return data;
+    }
+
     private DataToGenerate? CollectData(GeneratorAttributeSyntaxContext context, CancellationToken token)
     {
         if (context.TargetSymbol is not INamedTypeSymbol symbol)
@@ -71,6 +112,7 @@ public class VTableProxyGenerator : IIncrementalGenerator
             throw new InvalidOperationException($"Can't perform codegen on: {context.TargetSymbol}");
         }
 
+        throw null;
         var fullName = symbol.ToString();
         var symbolMembers = symbol.GetMembers();
         var members = new List<string>(symbolMembers.Length);
@@ -81,9 +123,6 @@ public class VTableProxyGenerator : IIncrementalGenerator
                 members.Add(x.Name);
             }
         }
-
-        //Throw(symbolMembers);
-        return null;
 
         // Create an EnumToGenerate for use in the generation phase
         //enumsToGenerate.Add(new EnumToGenerate(enumName, members));
@@ -96,47 +135,14 @@ public class VTableProxyGenerator : IIncrementalGenerator
             }
         }
 
-        //return new EnumToGenerate(enumName, members);
-    }
-
-    private static void Throw(object data)
-    {
-        throw new DivideByZeroException(JsonSerializer.Serialize(data, Options));
-    }
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        WriteIndented = true,
-        Converters = {new BadClassConverter()}
-    };
-}
-
-public record Function(string Name, string Declaration);
-
-public record DataToGenerate(string Name, IReadOnlyList<Function> Functions);
-
-public class BadClassConverter: JsonConverterFactory
-{
-    public override bool CanConvert(Type typeToConvert)
-    {
-        return typeToConvert == typeof(Encoding);
-    }
-
-
-    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-    {
-        return (JsonConverter) Activator.CreateInstance(typeof(BadClassConverterInner<>).MakeGenericType(typeToConvert), args: [options])!;
+        throw null;
     }
 }
 
-public class BadClassConverterInner<T> : JsonConverter<T>
-{
-    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        throw new NotImplementedException();
-    }
 
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue($"ignored {typeof(T)}");
-    }
-}
+
+public record Arg(string Type, string Name);
+
+public record Function(string Name, List<Arg> Args, string Return);
+
+public record DataToGenerate(string Name, string Namespace, List<Function> Functions);

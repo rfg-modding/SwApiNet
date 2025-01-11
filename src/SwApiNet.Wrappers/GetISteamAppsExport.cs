@@ -1,16 +1,9 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using SwApiNet.Codegen;
 using SwApiNet.Wrappers.Models;
 
 namespace SwApiNet.Wrappers;
-
-[VTableProxy]
-public unsafe interface ISteamClientVTable
-{
-    nint GetISteamApps(SteamClient* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
-}
 
 // for a vtable interface, generate this
 [StructLayout(LayoutKind.Sequential)]
@@ -26,7 +19,7 @@ public unsafe partial struct SteamClientVTable : ISteamClientVTable
         GetISteamAppsPtr = Interop.GetISteamAppsFake;
     }
 
-    // actual fields, generate
+    // actual fields, generate with Ptr suffix
     public nint UnusedCreateSteamPipe;
     public nint UnusedBReleaseSteamPipe;
     public nint UnusedConnectToGlobalUser;

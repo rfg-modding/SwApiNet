@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwApiNet.Wrappers", "SwApiN
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwApiNet.Codegen", "SwApiNet.Codegen\SwApiNet.Codegen.csproj", "{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0B5E3E94-7CB7-40D7-80F1-8A67255E3D5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwApiNet.Codegen.Tests", "SwApiNet.Codegen.Tests\SwApiNet.Codegen.Tests.csproj", "{D1333007-06BC-48C7-B4D5-BC387EDAC505}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,11 +31,18 @@ Global
 		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24A04E1F-FBDA-4C2E-9040-2B35224B6D8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1333007-06BC-48C7-B4D5-BC387EDAC505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1333007-06BC-48C7-B4D5-BC387EDAC505}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1333007-06BC-48C7-B4D5-BC387EDAC505}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1333007-06BC-48C7-B4D5-BC387EDAC505}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {74533994-B78D-4C14-BAC8-9DE8B71E3D8F}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D1333007-06BC-48C7-B4D5-BC387EDAC505} = {0B5E3E94-7CB7-40D7-80F1-8A67255E3D5F}
 	EndGlobalSection
 EndGlobal
