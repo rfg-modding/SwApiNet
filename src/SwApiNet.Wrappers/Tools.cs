@@ -83,7 +83,9 @@ public static class Tools
         {
             return $"(null)";
         }
+#pragma warning disable CS0252, CS0253
         if (o == typeof(void))
+#pragma warning restore CS0252, CS0253
         {
             return $"(void)";
         }
@@ -128,32 +130,6 @@ public static class Tools
     private static readonly object Locker = new();
 
     private static string lastMessage = string.Empty;
-    private static int counter;
-}
-
-public class CallCountGuard
-{
-    private readonly Dictionary<string, int> methodCalls = new();
-    private static readonly object Locker = new();
-
-    /// <summary>
-    /// Throws if a method is called more than expected count
-    /// </summary>
-    public void Check(int limit, [CallerMemberName] string? method = null)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(method);
-        lock (Locker)
-        {
-            var value = methodCalls.GetValueOrDefault(method, 0);
-            value++;
-            methodCalls[method] = value;
-
-            if(value > limit)
-            {
-                throw new InvalidOperationException($"Method [{method}] was called more times than expected ({limit})");
-            }
-        }
-    }
 }
 
 /*

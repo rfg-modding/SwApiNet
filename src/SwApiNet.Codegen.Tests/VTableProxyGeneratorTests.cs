@@ -22,8 +22,9 @@ namespace Test;
 [VTableProxy]
 public unsafe interface ISteamClientVTable
 {
-    nint GetISteamApps(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
-    void TestNoReturn(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
+    //nint GetISteamApps(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
+    nint UnusedCreateSteamPipe { get; }
+    //void TestNoReturn(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
 }
 
 public enum HSteamUser;
@@ -45,7 +46,7 @@ public enum HSteamPipe;
         var result = driver.GetRunResult();
 
 
-        var text = result.GeneratedTrees.Select(x => x.GetText().ToString());
+        var text = result.GeneratedTrees.Select(x =>  $"//{x.FilePath}\n{x.GetText()}");
         Assert.Fail(string.Join("\n\n============\n\n", text));
     }
 }

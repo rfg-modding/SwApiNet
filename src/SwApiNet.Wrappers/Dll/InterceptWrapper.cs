@@ -17,9 +17,10 @@ public unsafe class InterceptWrapper : IWrapper
 
         // allocate unmanaged memory. VTables are static and can be cached forever, no freeing required
         SteamClient* fake = (SteamClient*)Marshal.AllocHGlobal(sizeof(SteamClient));
-        fake->Table = (SteamClientVTable*) Marshal.AllocHGlobal(sizeof(SteamClientVTable));
 
-        Marshal.StructureToPtr(new SteamClientVTable(steamClientDll->Table), (nint)fake->Table, true);
+        fake->Table = (ManualSteamClientVTable*) Marshal.AllocHGlobal(sizeof(ManualSteamClientVTable));
+
+        Marshal.StructureToPtr(new ManualSteamClientVTable(steamClientDll->Table), (nint)fake->Table, true);
         //return (nint)fake;
 
         //SteamClientVTable.Interop.Target = new SteamClientVTable.InterceptWrapper(new SteamClientVTable.LogWrapper(new SteamClientVTable.PassThroughWrapper()));

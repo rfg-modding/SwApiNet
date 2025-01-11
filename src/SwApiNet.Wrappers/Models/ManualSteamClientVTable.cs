@@ -1,18 +1,19 @@
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using SwApiNet.Wrappers.Models;
 
-namespace SwApiNet.Wrappers;
+namespace SwApiNet.Wrappers.Models;
 
-// for a vtable interface, generate this
+/// <summary>
+/// See <see cref="ISteamClientVTable"/>
+/// </summary>
+///
 [StructLayout(LayoutKind.Sequential)]
-public unsafe partial struct SteamClientVTable : ISteamClientVTable
+public unsafe partial struct ManualSteamClientVTable //: ISteamClientVTable
 {
-    public SteamClientVTable(SteamClientVTable* real)
+    public ManualSteamClientVTable(ManualSteamClientVTable* real)
     {
         // can't store directly in the struct, it will affect size
-        Interop.Target = new InterceptWrapper(new LogWrapper(new PassThroughWrapper()));
+        //Interop.Target = new InterceptWrapper(new LogWrapper(new PassThroughWrapper()));
 
         // replace fake and real pointers, generate
         Interop.GetISteamAppsReal = real->GetISteamAppsPtr;
@@ -20,7 +21,7 @@ public unsafe partial struct SteamClientVTable : ISteamClientVTable
     }
 
     // actual fields, generate with Ptr suffix
-    public nint UnusedCreateSteamPipe;
+    public nint UnusedCreateSteamPipe; //UnusedCreateSteamPipe
     public nint UnusedBReleaseSteamPipe;
     public nint UnusedConnectToGlobalUser;
     public nint UnusedCreateLocalUser;
@@ -60,20 +61,22 @@ public unsafe partial struct SteamClientVTable : ISteamClientVTable
 
     // methods to call internally, generate
     public nint GetISteamApps(SteamClient* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr) => Interop.Target.GetISteamApps(thisPtr, user, pipe, versionStr);
+    public nint Hello => this.UnusedCreateSteamPipe;
 
-    public class LogWrapper(ISteamClientVTable target) : ISteamClientVTable
+
+    public class LogWrapper(ISteamClientVTable target) //: ISteamClientVTable
     {
         // log params, generate
         public nint GetISteamApps(SteamClient* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr) => Tools.LogMethod(() => target.GetISteamApps(thisPtr, user, pipe, versionStr), ArgsBag.Init().Add(thisPtr).Add(user).Add(pipe).Add(versionStr));
     }
 
-    public class PassThroughWrapper() : ISteamClientVTable
+    public class PassThroughWrapper() //: ISteamClientVTable
     {
         // call real function, generate
         public nint GetISteamApps(SteamClient* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr) => Interop.GetISteamAppsReal(thisPtr, user, pipe, versionStr);
     }
 
-    public class InterceptWrapperBase(ISteamClientVTable target) : ISteamClientVTable
+    public class InterceptWrapperBase(ISteamClientVTable target) //: ISteamClientVTable
     {
         // stub method, just passing through, generate
         public virtual nint GetISteamApps(SteamClient* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr) => target.GetISteamApps(thisPtr, user, pipe, versionStr);
