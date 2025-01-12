@@ -27,5 +27,5 @@ public unsafe class DllPassThroughWrapper : IDllWrapper
 
     public void UnregisterCallResult(nint cCallResultPtr, nint field1Ptr, nint field2Ptr) => Imports.SW_CCSys_UnregisterCallResult(cCallResultPtr, field1Ptr, field2Ptr);
 
-    public int CFalse() => 1;
+    public int CFalse() => Tools.CFalse;
 }

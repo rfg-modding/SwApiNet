@@ -130,6 +130,10 @@ public static class Tools
         return sb.ToString();
     }
 
+    public static readonly nuint DeadBeef = 0xDEADBEEF;
+    public static readonly int CFalse = 1;
+    public static readonly int CTrue = 0;
+
 }
 
 /*

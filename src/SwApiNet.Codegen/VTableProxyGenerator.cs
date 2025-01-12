@@ -268,7 +268,7 @@ public class DeadBeefAttribute: System.Attribute {}
                 if (x.DeadBeef)
                 {
                     // return stub value right away
-                    interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => (nint)DeadBeef;");
+                    interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => (nint)Tools.DeadBeef;");
                 }
                 else
                 {
@@ -336,8 +336,6 @@ public class DeadBeefAttribute: System.Attribute {}
                          public static partial class Interop
                          {
                              public static {{data.InterfaceName}} Target { get; set; } = null!;
-                             
-                             private static readonly nuint DeadBeef = 0xDEADBEEF;
 
                      {{interopReal}}
                      {{interopFake}}

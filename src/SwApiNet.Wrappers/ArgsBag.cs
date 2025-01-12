@@ -73,14 +73,14 @@ public class ArgsBag
             return "(none)";
         }
 
-        var result = string.Join(", ", dictionary.OfType<DictionaryEntry>().Select(x => $"{x.Key} = {Tools.Serialize(x.Value)}"));
+        var result = string.Join(", ", dictionary.OfType<DictionaryEntry>().Select(x => $"{x.Key} = {Serialize(x.Value)}"));
         return $"({result})";
     }
 
     private ArgsBag AddInternal(object value, string? name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        dictionary.Add(name, Tools.Serialize(value));
+        dictionary.Add(name, Serialize(value));
         return this;
     }
 

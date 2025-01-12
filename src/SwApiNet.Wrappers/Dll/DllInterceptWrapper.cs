@@ -95,7 +95,7 @@ public unsafe class DllInterceptWrapper : IDllWrapper
 
     public int CFalse()
     {
-        return 1;
+        return Tools.CFalse;
     }
 
 

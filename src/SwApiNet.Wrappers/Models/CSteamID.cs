@@ -1,3 +1,3 @@
 namespace SwApiNet.Wrappers.Models;
 
-public enum HSteamPipe;
+public enum CSteamID : ulong;
