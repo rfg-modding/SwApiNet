@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -9,23 +10,33 @@ public class VTableProxyGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Register the attribute source
-        context.RegisterPostInitializationOutput(i =>
-        {
-            var attributeSource = @"
-namespace SwApiNet.Codegen;
-
-[System.AttributeUsage(System.AttributeTargets.Interface, Inherited=false)]
-public class VTableProxyAttribute: System.Attribute {} 
-";
-            i.AddSource("VTableProxyAttribute.g.cs", attributeSource);
-        });
+        AddAttributes(context);
 
         // does not work in tests:
         //var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SwApiNet.Codegen.VTableProxyAttribute", IsInterface, CollectDataAfterAttribute);
         var data = context.SyntaxProvider.CreateSyntaxProvider(IsInterface, CollectData);
         var files = data.Where(x => x != null).Select((x, _) => x!.Value).Select((x, _) => (name: $"{x.StructName}.g", content: GenerateContent(x)));
         context.RegisterSourceOutput(files, Output);
+    }
+
+    private static void AddAttributes(IncrementalGeneratorInitializationContext context)
+    {
+        context.RegisterPostInitializationOutput(i =>
+        {
+            var attributeSource = @"
+namespace SwApiNet.Codegen;
+
+[System.AttributeUsage(System.AttributeTargets.Interface, Inherited=false)]
+public class VTableProxyAttribute: System.Attribute {}
+
+[System.AttributeUsage(System.AttributeTargets.Property, Inherited=false)]
+public class UnusedAttribute: System.Attribute {}
+
+[System.AttributeUsage(System.AttributeTargets.Method, Inherited=false)]
+public class DeadBeefAttribute: System.Attribute {}
+";
+            i.AddSource("VTableProxyAttribute.g.cs", attributeSource);
+        });
     }
 
     private void Output(SourceProductionContext context, (string name, string content) x)
@@ -57,7 +68,7 @@ public class VTableProxyAttribute: System.Attribute {}
                 {
                     continue;
                 }
-                // declare delegate and proxies
+                var deadBeef = method.GetAttributes().Any(a => a.AttributeClass?.Name.StartsWith("DeadBeef") == true);
                 var args = new List<Arg>();
                 foreach (var methodParameter in method.Parameters)
                 {
@@ -65,13 +76,14 @@ public class VTableProxyAttribute: System.Attribute {}
                     var name = methodParameter.Name;
                     args.Add(new Arg(type, name));
                 }
-
-                functions.Add(new Member(x.Name, new RecordArray<Arg>(args), method.ReturnType.ToString(), true));
+                // declare delegate and proxies
+                functions.Add(new Member(x.Name, new RecordArray<Arg>(args), method.ReturnType.ToString(), true, false, deadBeef));
             }
             else if (x is IPropertySymbol prop)
             {
+                var unused = prop.GetAttributes().Any(a => a.AttributeClass?.Name.StartsWith("Unused") == true);
                 // declare field
-                functions.Add(new Member(x.Name, new RecordArray<Arg>(), prop.Type.ToString(), false));
+                functions.Add(new Member(x.Name, new RecordArray<Arg>(), prop.Type.ToString(), false, unused, false));
             }}
 
         return new DataToGenerate(symbol.Name, symbol.ContainingNamespace.ToString(), new RecordArray<Member>(functions));
@@ -88,8 +100,15 @@ public class VTableProxyAttribute: System.Attribute {}
             }
             else
             {
-                interopInit.AppendLine($"        Interop.{x.Name}Real = real->{x.Name}Val;");
-                interopInit.AppendLine($"        Interop.{x.Name}Fake = real->{x.Name}Val;");
+                if (x.Unused)
+                {
+                }
+                else
+                {
+                    interopInit.AppendLine($"        Interop.{x.Name}Real = real->{x.Name}Val;");
+                    interopInit.AppendLine($"        Interop.{x.Name}Fake = real->{x.Name}Val;");
+                }
+
             }
         }
 
@@ -102,8 +121,17 @@ public class VTableProxyAttribute: System.Attribute {}
             }
             else
             {
-                // no way to use proxy chain for field containint a value
-                structPointersInit.AppendLine($"        this.{x.Name}Val = real->{x.Name};");
+                if (x.Unused)
+                {
+                    // init with 0 or whatever
+                    structPointersInit.AppendLine($"        this.{x.Name}Val = default;");
+                }
+                else
+                {
+                    // no way to use proxy chain for field containint a value
+                    structPointersInit.AppendLine($"        this.{x.Name}Val = real->{x.Name};");
+                }
+
             }
         }
 
@@ -139,11 +167,11 @@ public class VTableProxyAttribute: System.Attribute {}
             if (x.IsMethod)
             {
                 var argsBag = string.Join(".", x.Args.Select(x => $"Add({x.Name})"));
-                logMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Tools.LogMethod(() => target.{x.Name}({x.ArgsList.Value}), ArgsBag.Init().{argsBag});");
+                logMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Tools.LogMethod(() => target.{x.Name}({x.ArgsList.Value}), ArgsBag.Init().{argsBag}, \"{data.StructName}\");");
             }
             else
             {
-                logMethods.AppendLine($"        public {x.ReturnType} {x.Name} => Tools.LogMethod(() => target.{x.Name}, ArgsBag.Empty);");
+                logMethods.AppendLine($"        public {x.ReturnType} {x.Name} => Tools.LogMethod(() => target.{x.Name}, ArgsBag.Empty, \"{data.StructName}\");");
             }
         }
 
@@ -156,7 +184,14 @@ public class VTableProxyAttribute: System.Attribute {}
             }
             else
             {
-                passThroughMethods.AppendLine($"        public {x.ReturnType} {x.Name} => Interop.{x.Name}Real;");
+                if (x.Unused)
+                {
+                    passThroughMethods.AppendLine($"        public {x.ReturnType} {x.Name} => default;");
+                }
+                else
+                {
+                    passThroughMethods.AppendLine($"        public {x.ReturnType} {x.Name} => Interop.{x.Name}Real;");
+                }
             }
         }
 
@@ -165,11 +200,25 @@ public class VTableProxyAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                interceptMethods.AppendLine($"        public virtual {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
+                if (x.DeadBeef)
+                {
+                    interceptMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
+                }
+                else
+                {
+                    interceptMethods.AppendLine($"        public virtual {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
+                }
             }
             else
             {
-                interceptMethods.AppendLine($"        public virtual {x.ReturnType} {x.Name} => target.{x.Name};");
+                if (x.Unused)
+                {
+                    interceptMethods.AppendLine($"        public {x.ReturnType} {x.Name} => target.{x.Name};");
+                }
+                else
+                {
+                    interceptMethods.AppendLine($"        public virtual {x.ReturnType} {x.Name} => target.{x.Name};");
+                }
             }
         }
 
@@ -182,7 +231,13 @@ public class VTableProxyAttribute: System.Attribute {}
             }
             else
             {
-                interopReal.AppendLine($"        public static {x.ReturnType} {x.Name}Real {{ get; set; }}");
+                if (x.Unused)
+                {
+                }
+                else
+                {
+                    interopReal.AppendLine($"        public static {x.ReturnType} {x.Name}Real {{ get; set; }}");
+                }
             }
         }
 
@@ -195,7 +250,13 @@ public class VTableProxyAttribute: System.Attribute {}
             }
             else
             {
-                interopReal.AppendLine($"        public static {x.ReturnType} {x.Name}Fake {{ get; set; }}");
+                if (x.Unused)
+                {
+                }
+                else
+                {
+                    interopReal.AppendLine($"        public static {x.ReturnType} {x.Name}Fake {{ get; set; }}");
+                }
             }
         }
 
@@ -204,7 +265,15 @@ public class VTableProxyAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => Target.{x.Name}({x.ArgsList});");
+                if (x.DeadBeef)
+                {
+                    // return stub value right away
+                    interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => (nint)DeadBeef;");
+                }
+                else
+                {
+                    interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => Target.{x.Name}({x.ArgsList});");
+                }
             }
         }
 
@@ -267,6 +336,8 @@ public class VTableProxyAttribute: System.Attribute {}
                          public static partial class Interop
                          {
                              public static {{data.InterfaceName}} Target { get; set; } = null!;
+                             
+                             private static readonly nuint DeadBeef = 0xDEADBEEF;
 
                      {{interopReal}}
                      {{interopFake}}

@@ -1,73 +1,87 @@
 using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic.CompilerServices;
+using NLog;
+using NLog.Extensions.Logging;
+using NLog.Layouts;
+using NLog.Targets;
 using SwApiNet.Wrappers.Dll;
 using SwApiNet.Wrappers.Models;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using LogLevel = NLog.LogLevel;
 
 namespace SwApiNet.Wrappers;
 
 public static class Tools
 {
-    public static void Log(string text, [CallerMemberName] string? method = null)
+    public static readonly ILogger Log;
+    private static readonly ILogger LogInternal;
+
+    static Tools()
     {
-        lock (Locker)
-        {
-            var message = $"{method ?? "null"} {text}";
-            var time = TimeOnly.FromDateTime(DateTime.UtcNow).ToString("O");
-            var fullLogMessage = $"DOTNET {time} {message}";
-            Console.WriteLine(fullLogMessage);
-        }
+        LogManager.Setup()
+            .LoadConfiguration(c =>
+            {
+                var target = c.ForTarget("file")
+                    .WriteTo(new FileTarget()
+                    {
+                        FileName = "SwApiLog.log",
+                        Layout =new SimpleLayout("${date:format=HH\\:mm\\:ss.fffffff} ${level:uppercase=true}\t${callsite:when=logger=='SwApiNet.Wrappers.Tools.LogAll'}${literal:text=\t:when=logger=='SwApiNet.Wrappers.Tools.LogAll'}${message:withexception=true}"),
+                        MaxArchiveFiles = 5,
+                        ArchiveNumbering = ArchiveNumberingMode.Rolling,
+                        ArchiveFileName = "SwApiLog.{#}.log",
+                        ArchiveOldFileOnStartup = true
+                    })
+                    .WithAsync();
+                c.ForLogger().FilterMinLevel(LogLevel.Trace).WriteTo(target);
+            });
+        var factory = new NLogLoggerFactory();
+        Log = new Logger<LogAll>(factory);
+        LogInternal = new Logger<LogForMethods>(factory);
+        Log.LogInformation("Initialized");
     }
 
-    public static T LogMethod<T>(Func<T> action, ArgsBag args, bool exceptionsOnly=false, [CallerMemberName] string? method = null)
+    private record LogAll;
+
+    private record LogForMethods;
+
+    public static T LogMethod<T>(Func<T> action, ArgsBag args, string origin, bool exceptionsOnly=false, [CallerMemberName] string? method = null)
     {
+        var sb = new StringBuilder();
+        sb.Append(origin).Append(".");
+        sb.Append(method ?? "null");
+        var caller = sb.ToString();
         try
         {
             if (!exceptionsOnly)
             {
-                lock (Locker)
-                {
-                    var message = $"{method ?? "null"}   args = {args}";
-                    var time = TimeOnly.FromDateTime(DateTime.UtcNow).ToString("O");
-                    var fullLogMessage = $"DOTNET {time} {message}";
-                    Console.WriteLine(fullLogMessage);
-                }
+                LogInternal.LogTrace($"{caller} args   = {args}");
             }
 
             var result = action();
             if (!exceptionsOnly)
             {
-                lock (Locker)
-                {
-                    var resultText = Serialize(result);
-                    var message = $"{method ?? "null"} return = {resultText}";
-                    var time = TimeOnly.FromDateTime(DateTime.UtcNow).ToString("O");
-                    var fullLogMessage = $"DOTNET {time} {message}";
-                    Console.WriteLine(fullLogMessage);
-                }
+                var resultText = Serialize(result);
+                LogInternal.LogTrace($"{caller} return = {resultText}");
             }
 
             return result;
         }
         catch (Exception e)
         {
-            lock (Locker)
-            {
-                var message = $"{method ?? "null"} {e}";
-                var time = TimeOnly.FromDateTime(DateTime.UtcNow).ToString("O");
-                var fullLogMessage = $"DOTNET {time} {message}";
-                Console.WriteLine(fullLogMessage);
-            }
-
+            LogInternal.LogError(e, $"{caller} failed");
             throw;
         }
 
     }
 
-    public static void LogMethod(Action action, ArgsBag args, bool exceptionsOnly=false, [CallerMemberName] string? method = null)
+    public static void LogMethod(Action action, ArgsBag args, string origin, bool exceptionsOnly=false, [CallerMemberName] string? method = null)
     {
-        LogMethod(Func, args, exceptionsOnly, method);
+        LogMethod(Func, args, origin, exceptionsOnly, method);
         return;
 
         Type Func()
@@ -97,39 +111,25 @@ public static class Tools
         return $"{o}";
     }
 
-    public static unsafe void LogPointer(string label, nint address, [CallerMemberName] string? method = null)
+    public static unsafe string PointerToString(string label, nint address)
     {
-        lock (Locker)
-        {
             var value = *(nint*)address;
-            var message = $"{method ?? "null"} {label} [{address:X8}] = {value:X8}";
-            var time = TimeOnly.FromDateTime(DateTime.UtcNow).ToString("O");
-            var fullLogMessage = $"DOTNET {time} {message}";
-            Console.WriteLine(fullLogMessage);
-        }
+            return $"{label} [{address:X8}] = {value:X8}";
     }
 
-    public static unsafe void LogMemory(string label, nint address, int length, [CallerMemberName] string? method = null)
+    public static unsafe string MemoryToString(string label, nint address, int length)
     {
-        lock (Locker)
+        var sb = new StringBuilder($"{label} [{address:X8}] =");
+        // reading 1 byte at a time
+        for (int i = 0; i < length; i++)
         {
-            var sb = new StringBuilder($"{method ?? "null"} {label} [{address:X8}] =");
-            // reading 1 byte at a time
-            for (int i = 0; i < length; i++)
-            {
-                var value = *(byte*)(address+i);
-                sb.Append($" {value:X2}");
-            }
-
-            var time = TimeOnly.FromDateTime(DateTime.UtcNow).ToString("O");
-            var fullLogMessage = $"DOTNET {time} {sb}";
-            Console.WriteLine(fullLogMessage);
+            var value = *(byte*)(address+i);
+            sb.Append($" {value:X2}");
         }
+
+        return sb.ToString();
     }
 
-    private static readonly object Locker = new();
-
-    private static string lastMessage = string.Empty;
 }
 
 /*

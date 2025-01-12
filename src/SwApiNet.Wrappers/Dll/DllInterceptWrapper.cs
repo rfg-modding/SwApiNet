@@ -14,11 +14,9 @@ public unsafe class DllInterceptWrapper : IDllWrapper
     {
         countGuard.Check(1);
         var steamClientDll = Imports.SW_CCSys_CreateInternalModule(cStringPtr);
-
         // allocate unmanaged memory. VTables are static and can be cached forever, no freeing required
         SteamClient* fake = (SteamClient*)Marshal.AllocHGlobal(sizeof(SteamClient));
         fake->Table = (SteamClientVTable*) Marshal.AllocHGlobal(sizeof(SteamClientVTable));
-
         // init proxy struct and related stuff
         Marshal.StructureToPtr(new SteamClientVTable(steamClientDll->Table), (nint)fake->Table, true);
         return (nint)fake;
@@ -99,4 +97,6 @@ public unsafe class DllInterceptWrapper : IDllWrapper
     {
         return 1;
     }
+
+
 }

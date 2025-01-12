@@ -22,9 +22,12 @@ namespace Test;
 [VTableProxy]
 public unsafe interface ISteamClientVTable
 {
-    //nint GetISteamApps(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
-    nint UnusedCreateSteamPipe { get; }
-    //void TestNoReturn(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
+    //nint Orange(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
+    //void Pineapple(double value);
+    [DeadBeef] nint Cherry(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);
+    //nint Apple { get; }
+    //[Unused] nint Banana { get; }
+    
 }
 
 public enum HSteamUser;

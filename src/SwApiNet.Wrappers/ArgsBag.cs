@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SwApiNet.Wrappers;
 
@@ -33,6 +34,16 @@ public class ArgsBag
     public unsafe ArgsBag Add(void* a, [CallerArgumentExpression(nameof(a))] string? aName = null)
     {
         return Add((nint) a, aName);
+    }
+
+    /// <summary>
+    /// Let's assume byte* is always a CString pointer
+    /// </summary>
+    /// <returns></returns>
+    public unsafe ArgsBag Add(byte* a, [CallerArgumentExpression(nameof(a))] string? aName = null)
+    {
+        var stringValue = Marshal.PtrToStringAnsi((nint)a);
+        return Add(stringValue ?? "(null)", aName);
     }
 
     public ArgsBag Add(object a, [CallerArgumentExpression(nameof(a))] string? aName=null)
