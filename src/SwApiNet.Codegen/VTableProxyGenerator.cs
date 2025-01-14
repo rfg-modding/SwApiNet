@@ -15,7 +15,7 @@ public class VTableProxyGenerator : IIncrementalGenerator
         // does not work in tests:
         //var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SwApiNet.Codegen.VTableProxyAttribute", IsInterface, CollectDataAfterAttribute);
         var data = context.SyntaxProvider.CreateSyntaxProvider(IsInterface, CollectData);
-        var files = data.Where(x => x != null).Select((x, _) => x!.Value).Select((x, _) => (name: $"{x.StructName}.g", content: GenerateContent(x)));
+        var files = data.Where(x => x != null).Select((x, _) => x!.Value).Select((x, _) => GenerateContent(x));
         context.RegisterSourceOutput(files, Output);
     }
 
@@ -39,9 +39,17 @@ public class DeadBeefAttribute: System.Attribute {}
         });
     }
 
-    private void Output(SourceProductionContext context, (string name, string content) x)
+    private void Output(SourceProductionContext context, GeneratedResult x)
     {
-        context.AddSource(x.name, x.content);
+        if (!string.IsNullOrWhiteSpace(x.Error))
+        {
+            context.ReportDiagnostic(Diagnostic.Create("RFG", "Codegen", $"Failed to generate {x.Filename}: {x.Error}", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, default));
+        }
+        else
+        {
+            context.AddSource(x.Filename, x.Content!);
+
+        }
     }
 
     private bool IsInterface(SyntaxNode node, CancellationToken token)
@@ -89,14 +97,57 @@ public class DeadBeefAttribute: System.Attribute {}
         return new DataToGenerate(symbol.Name, symbol.ContainingNamespace.ToString(), new RecordArray<Member>(functions));
     }
 
-    private string GenerateContent(DataToGenerate data)
+    private GeneratedResult GenerateContent(DataToGenerate data)
     {
+        try
+        {
+            return GenerateContentSafe(data);
+        }
+        catch (Exception e)
+        {
+            return data.Failure(e.ToString());
+        }
+    }
+
+    private GeneratedResult GenerateContentSafe(DataToGenerate data)
+    {
+        if (!data.InterfaceName.StartsWith("I"))
+        {
+            throw new InvalidOperationException($"""Interface name must start with "I" for proper code generation """);
+        }
+
+        if (!data.InterfaceName.EndsWith("VTable"))
+        {
+            throw new InvalidOperationException($"""Interface name must end with "VTable" for proper code generation """);
+        }
+
+        var functionsWithoutFirstArg = data.Functions
+            .Where(x => x.IsMethod)
+            .Where(x => !x.Args.Any())
+            .Select(x => $"{x.Name}()")
+            .ToList();
+        if(functionsWithoutFirstArg.Any())
+        {
+            throw new InvalidOperationException($"""Every function must have first argument of type "{data.ParentType}", it will be generated automatically. Functions with no arguments: {string.Join(", ", functionsWithoutFirstArg)}""");
+        }
+
+        var requiredType = $"{data.ParentType}*";
+        var functionsWithBadFirstArgs = data.Functions
+            .Where(x => x.IsMethod)
+            .Where(x => x.Args.FirstOrDefault().Type.Split('.').Last() != requiredType)
+            .Select(x => $"{x.Name}({x.Args.FirstOrDefault().Type})")
+            .ToList();
+        if(functionsWithBadFirstArgs.Any())
+        {
+            throw new InvalidOperationException($"""Every function must have first argument of type "{requiredType}", it will be generated automatically. Functions with invalid first arguments: {string.Join(", ", functionsWithBadFirstArgs)}""");
+        }
+
         var interopInit = new StringBuilder();
         foreach (var x in data.Functions)
         {
             if (x.IsMethod)
             {
-                interopInit.AppendLine($"        Interop.{x.Name}Real = real->{x.Name}Ptr;");
+                interopInit.AppendLine($"            Interop.{x.Name}Real = real->{x.Name}Ptr;");
             }
             else
             {
@@ -105,8 +156,8 @@ public class DeadBeefAttribute: System.Attribute {}
                 }
                 else
                 {
-                    interopInit.AppendLine($"        Interop.{x.Name}Real = real->{x.Name}Val;");
-                    interopInit.AppendLine($"        Interop.{x.Name}Fake = real->{x.Name}Val;");
+                    interopInit.AppendLine($"            Interop.{x.Name}Real = real->{x.Name}Val;");
+                    interopInit.AppendLine($"            Interop.{x.Name}Fake = real->{x.Name}Val;");
                 }
 
             }
@@ -117,19 +168,19 @@ public class DeadBeefAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                structPointersInit.AppendLine($"        this.{x.Name}Ptr = Interop.{x.Name}Fake;");
+                structPointersInit.AppendLine($"            this.{x.Name}Ptr = Interop.{x.Name}Fake;");
             }
             else
             {
                 if (x.Unused)
                 {
                     // init with 0 or whatever
-                    structPointersInit.AppendLine($"        this.{x.Name}Val = default;");
+                    structPointersInit.AppendLine($"            this.{x.Name}Val = default;");
                 }
                 else
                 {
                     // no way to use proxy chain for field containint a value
-                    structPointersInit.AppendLine($"        this.{x.Name}Val = real->{x.Name};");
+                    structPointersInit.AppendLine($"            this.{x.Name}Val = real->{x.Name};");
                 }
 
             }
@@ -140,11 +191,11 @@ public class DeadBeefAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                structFields.AppendLine($"    public delegate* unmanaged[Thiscall]<{x.ArgsGeneric.Value}> {x.Name}Ptr;");
+                structFields.AppendLine($"        public delegate* unmanaged[Thiscall]<{x.ArgsGeneric.Value}> {x.Name}Ptr;");
             }
             else
             {
-                structFields.AppendLine($"    public {x.ReturnType} {x.Name}Val;");
+                structFields.AppendLine($"        public {x.ReturnType} {x.Name}Val;");
             }
         }
 
@@ -153,11 +204,11 @@ public class DeadBeefAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                structMethods.AppendLine($"    public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Interop.Target.{x.Name}({x.ArgsList.Value});");
+                structMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Interop.Target.{x.Name}({x.ArgsList.Value});");
             }
             else
             {
-                structMethods.AppendLine($"    public {x.ReturnType} {x.Name} => this.{x.Name}Val;");
+                structMethods.AppendLine($"        public {x.ReturnType} {x.Name} => this.{x.Name}Val;");
             }
         }
 
@@ -167,11 +218,11 @@ public class DeadBeefAttribute: System.Attribute {}
             if (x.IsMethod)
             {
                 var argsBag = string.Join(".", x.Args.Select(x => $"Add({x.Name})"));
-                logMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Tools.LogMethod(() => target.{x.Name}({x.ArgsList.Value}), ArgsBag.Init().{argsBag}, \"{data.StructName}\");");
+                logMethods.AppendLine($"            public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Tools.LogMethod(() => target.{x.Name}({x.ArgsList.Value}), ArgsBag.Init().{argsBag}, \"{data.FullVTableName}\");");
             }
             else
             {
-                logMethods.AppendLine($"        public {x.ReturnType} {x.Name} => Tools.LogMethod(() => target.{x.Name}, ArgsBag.Empty, \"{data.StructName}\");");
+                logMethods.AppendLine($"            public {x.ReturnType} {x.Name} => Tools.LogMethod(() => target.{x.Name}, ArgsBag.Empty, \"{data.FullVTableName}\");");
             }
         }
 
@@ -180,17 +231,17 @@ public class DeadBeefAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                passThroughMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Interop.{x.Name}Real({x.ArgsList.Value});");
+                passThroughMethods.AppendLine($"            public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => Interop.{x.Name}Real({x.ArgsList.Value});");
             }
             else
             {
                 if (x.Unused)
                 {
-                    passThroughMethods.AppendLine($"        public {x.ReturnType} {x.Name} => default;");
+                    passThroughMethods.AppendLine($"            public {x.ReturnType} {x.Name} => default;");
                 }
                 else
                 {
-                    passThroughMethods.AppendLine($"        public {x.ReturnType} {x.Name} => Interop.{x.Name}Real;");
+                    passThroughMethods.AppendLine($"            public {x.ReturnType} {x.Name} => Interop.{x.Name}Real;");
                 }
             }
         }
@@ -202,22 +253,22 @@ public class DeadBeefAttribute: System.Attribute {}
             {
                 if (x.DeadBeef)
                 {
-                    interceptMethods.AppendLine($"        public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
+                    interceptMethods.AppendLine($"            public {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
                 }
                 else
                 {
-                    interceptMethods.AppendLine($"        public virtual {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
+                    interceptMethods.AppendLine($"            public virtual {x.ReturnType} {x.Name}({x.ArgsDefinition.Value}) => target.{x.Name}({x.ArgsList.Value});");
                 }
             }
             else
             {
                 if (x.Unused)
                 {
-                    interceptMethods.AppendLine($"        public {x.ReturnType} {x.Name} => target.{x.Name};");
+                    interceptMethods.AppendLine($"            public {x.ReturnType} {x.Name} => target.{x.Name};");
                 }
                 else
                 {
-                    interceptMethods.AppendLine($"        public virtual {x.ReturnType} {x.Name} => target.{x.Name};");
+                    interceptMethods.AppendLine($"            public virtual {x.ReturnType} {x.Name} => target.{x.Name};");
                 }
             }
         }
@@ -227,7 +278,7 @@ public class DeadBeefAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                interopReal.AppendLine($"        public static delegate* unmanaged[Thiscall]<{x.ArgsGeneric.Value}> {x.Name}Real {{ get; set; }}");
+                interopReal.AppendLine($"            public static delegate* unmanaged[Thiscall]<{x.ArgsGeneric.Value}> {x.Name}Real {{ get; set; }}");
             }
             else
             {
@@ -236,7 +287,7 @@ public class DeadBeefAttribute: System.Attribute {}
                 }
                 else
                 {
-                    interopReal.AppendLine($"        public static {x.ReturnType} {x.Name}Real {{ get; set; }}");
+                    interopReal.AppendLine($"            public static {x.ReturnType} {x.Name}Real {{ get; set; }}");
                 }
             }
         }
@@ -246,7 +297,7 @@ public class DeadBeefAttribute: System.Attribute {}
         {
             if (x.IsMethod)
             {
-                interopFake.AppendLine($"        public static delegate* unmanaged[Thiscall]<{x.ArgsGeneric.Value}> {x.Name}Fake {{ get; set; }} = &{x.Name}Export;");
+                interopFake.AppendLine($"            public static delegate* unmanaged[Thiscall]<{x.ArgsGeneric.Value}> {x.Name}Fake {{ get; set; }} = &{x.Name}Export;");
             }
             else
             {
@@ -255,7 +306,7 @@ public class DeadBeefAttribute: System.Attribute {}
                 }
                 else
                 {
-                    interopReal.AppendLine($"        public static {x.ReturnType} {x.Name}Fake {{ get; set; }}");
+                    interopReal.AppendLine($"            public static {x.ReturnType} {x.Name}Fake {{ get; set; }}");
                 }
             }
         }
@@ -268,81 +319,95 @@ public class DeadBeefAttribute: System.Attribute {}
                 if (x.DeadBeef)
                 {
                     // return stub value right away
-                    interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => (nint)Tools.DeadBeef;");
+                    interopExports.AppendLine($"            [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => (nint)Tools.DeadBeef;");
                 }
                 else
                 {
-                    interopExports.AppendLine($"        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => Target.{x.Name}({x.ArgsList});");
+                    interopExports.AppendLine($"            [UnmanagedCallersOnly(CallConvs = [typeof(CallConvThiscall)])] public static {x.ReturnType} {x.Name}Export({x.ArgsDefinition}) => Target.{x.Name}({x.ArgsList});");
                 }
             }
         }
 
         var text = $$"""
-                     using System.Runtime.CompilerServices;
-                     using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-                     namespace {{data.Namespace}};
+namespace {{data.Namespace}};
 
-                     /// <inheritdoc />
-                     [StructLayout(LayoutKind.Sequential)]
-                     public unsafe partial struct {{data.StructName}} : {{data.InterfaceName}}
-                     {
-                         /// <inheritdoc />
-                         public {{data.StructName}}({{data.StructName}}* real)
-                         {
-                             // can't store directly in the struct, it will affect size
-                             Interop.Target = new InterceptWrapper(new LogWrapper(new PassThroughWrapper()));
-                     
-                             // replace real pointers
-                             // fields will be equal to values of real struct
-                             // methods will point to fake exported delegates to call wrapper chain
-                     {{interopInit}}
-                             // wire fake pointers and values
-                     {{structPointersInit}}
-                         }
-                     
-                         // actual fields
-                     {{structFields}}
-                         // internally callable methods
-                     {{structMethods}}
-                     
-                         /// <inheritdoc />
-                         public partial class LogWrapper({{data.InterfaceName}} target) : {{data.InterfaceName}}
-                         {
-                     {{logMethods}}
-                         }
-                     
-                         /// <inheritdoc />
-                         public partial class PassThroughWrapper() : {{data.InterfaceName}}
-                         {
-                     {{passThroughMethods}}
-                         }
-                     
-                         /// <inheritdoc />
-                         public partial class InterceptWrapperBase({{data.InterfaceName}} target) : {{data.InterfaceName}}
-                         {
-                     {{interceptMethods}}
-                         }
-                     
-                         /// <inheritdoc />
-                         public partial class InterceptWrapper({{data.InterfaceName}} target) : InterceptWrapperBase(target)
-                         {
-                             // write overrides manually here when needed
-                         }
-                     
-                         /// <summary>
-                         /// Generated from <see cref="{{data.InterfaceName}}"/>
-                         /// </summary>
-                         public static partial class Interop
-                         {
-                             public static {{data.InterfaceName}} Target { get; set; } = null!;
+/// <inheritdoc />
+[StructLayout(LayoutKind.Sequential)]
+public unsafe partial struct {{data.ParentType}}
+{
+    public unsafe VTable* Table;
+    public Fields OtherFields;
 
-                     {{interopReal}}
-                     {{interopFake}}
-                     {{interopExports}}
-                         }
-                     }
-                     """;
-        return text;
+    /// <inheritdoc />    
+    [StructLayout(LayoutKind.Sequential)]
+    public partial struct Fields{
+    }
+    
+    /// <inheritdoc />
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe partial struct VTable : {{data.InterfaceName}}
+    {
+        /// <inheritdoc />
+        public VTable(VTable* real)
+        {
+            // can't store directly in the struct, it will affect size
+            Interop.Target = new InterceptWrapper(new LogWrapper(new PassThroughWrapper()));
+
+            // replace real pointers
+            // fields will be equal to values of real struct
+            // methods will point to fake exported delegates to call wrapper chain
+{{interopInit}}
+            // wire fake pointers and values
+{{structPointersInit}}
+        }
+
+        // actual fields
+{{structFields}}
+        // internally callable methods
+{{structMethods}}
+
+        /// <inheritdoc />
+        public partial class LogWrapper({{data.InterfaceName}} target) : {{data.InterfaceName}}
+        {
+{{logMethods}}
+        }
+
+        /// <inheritdoc />
+        public partial class PassThroughWrapper() : {{data.InterfaceName}}
+        {
+{{passThroughMethods}}
+        }
+
+        /// <inheritdoc />
+        public partial class InterceptWrapperBase({{data.InterfaceName}} target) : {{data.InterfaceName}}
+        {
+{{interceptMethods}}
+        }
+
+        /// <inheritdoc />
+        public partial class InterceptWrapper({{data.InterfaceName}} target) : InterceptWrapperBase(target)
+        {
+            // write overrides manually here when needed
+        }
+
+        /// <summary>
+        /// Generated from <see cref="{{data.InterfaceName}}"/>
+        /// </summary>
+        public static partial class Interop
+        {
+            public static {{data.InterfaceName}} Target { get; set; } = null!;
+
+{{interopReal}}
+{{interopFake}}
+{{interopExports}}
+        }
+    }   
+}
+""";
+
+        return data.Success(text);
     }
 }

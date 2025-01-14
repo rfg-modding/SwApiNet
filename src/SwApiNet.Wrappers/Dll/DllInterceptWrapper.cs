@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Steam;
 
 namespace SwApiNet.Wrappers.Dll ;
 
@@ -16,9 +17,9 @@ public unsafe class DllInterceptWrapper : IDllWrapper
         var steamClientDll = Imports.SW_CCSys_CreateInternalModule(cStringPtr);
         // allocate unmanaged memory. VTables are static and can be cached forever, no freeing required
         SteamClient* fake = (SteamClient*)Marshal.AllocHGlobal(sizeof(SteamClient));
-        fake->Table = (SteamClientVTable*) Marshal.AllocHGlobal(sizeof(SteamClientVTable));
+        fake->Table = (SteamClient.VTable*) Marshal.AllocHGlobal(sizeof(SteamClient.VTable));
         // init proxy struct and related stuff
-        Marshal.StructureToPtr(new SteamClientVTable(steamClientDll->Table), (nint)fake->Table, true);
+        Marshal.StructureToPtr(new SteamClient.VTable(steamClientDll->Table), (nint)fake->Table, true);
         return (nint)fake;
     }
 
@@ -49,9 +50,10 @@ public unsafe class DllInterceptWrapper : IDllWrapper
         return Imports.SW_CCSys_Init();
     }
 
-    public nint InitCallbackFunc(nint callbackFuncPtr, int callbackId)
+    public nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId)
     {
         countGuard.Check(12);
+        // TODO manage init callback + register result
         return Imports.SW_CCSys_InitCallbackFunc(callbackFuncPtr, callbackId);
     }
 

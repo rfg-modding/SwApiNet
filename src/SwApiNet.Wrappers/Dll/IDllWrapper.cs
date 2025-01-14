@@ -1,3 +1,5 @@
+using SwApiNet.Wrappers.Models;
+
 namespace SwApiNet.Wrappers.Dll;
 
 public interface IDllWrapper
@@ -13,7 +15,7 @@ public interface IDllWrapper
     /// <returns>bool is not blittable, have to return int</returns>
     int Init();
 
-    nint InitCallbackFunc(nint callbackFuncPtr, int callbackId);
+    nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId);
 
     void ProcessApiCb();
 

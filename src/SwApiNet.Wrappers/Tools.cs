@@ -49,6 +49,7 @@ public static class Tools
 
     private record LogForMethods;
 
+    // TODO: when return type is pointer, this method blocks from writing vtable signatures. fix somehow?
     public static T LogMethod<T>(Func<T> action, ArgsBag args, string origin, bool exceptionsOnly=false, [CallerMemberName] string? method = null)
     {
         var sb = new StringBuilder();

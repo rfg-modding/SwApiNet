@@ -1,3 +1,5 @@
+using SwApiNet.Wrappers.Models;
+
 namespace SwApiNet.Wrappers.Dll;
 
 /// <summary>
@@ -15,7 +17,7 @@ public unsafe class DllPassThroughWrapper : IDllWrapper
 
     public int Init() => Imports.SW_CCSys_Init();
 
-    public nint InitCallbackFunc(nint callbackFuncPtr, int callbackId) => Imports.SW_CCSys_InitCallbackFunc(callbackFuncPtr, callbackId);
+    public nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId) => Imports.SW_CCSys_InitCallbackFunc(callbackFuncPtr, callbackId);
 
     public void ProcessApiCb() => Imports.SW_CCSys_ProcessApiCb();
 

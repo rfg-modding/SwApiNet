@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SwApiNet.Wrappers.Dll;
+using SwApiNet.Wrappers.Models;
 
 namespace SwApiNet;
 
@@ -23,7 +24,7 @@ public static class Exports
     public static int SW_CCSys_Init() => Target.Init();
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    public static nint SW_CCSys_InitCallbackFunc(nint callbackFuncPtr, int callbackId) => Target.InitCallbackFunc(callbackFuncPtr, callbackId);
+    public static nint SW_CCSys_InitCallbackFunc(nint callbackFuncPtr, int callbackId) => Target.InitCallbackFunc(callbackFuncPtr, (CallbackType)callbackId);
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static void SW_CCSys_ProcessApiCb() => Target.ProcessApiCb();

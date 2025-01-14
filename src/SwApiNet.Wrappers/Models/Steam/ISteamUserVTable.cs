@@ -1,15 +1,10 @@
 using SwApiNet.Codegen;
 
-namespace SwApiNet.Wrappers.Models;
+namespace SwApiNet.Wrappers.Models.Steam;
 
 [VTableProxy]
 public unsafe interface ISteamUserVTable
 {
-/*
-
-
-
-*/
     HSteamUser SW_CCSys_GetU(SteamUser* thisPtr);
     /// <summary>
     /// Returns bogus value as bool - probably false

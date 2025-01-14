@@ -1,3 +1,5 @@
+using SwApiNet.Wrappers.Models;
+
 namespace SwApiNet.Wrappers.Dll;
 
 /// <summary>
@@ -28,7 +30,7 @@ public class DllLogWrapper(IDllWrapper target) : IDllWrapper
 
     public int Init() => LogMethod(target.Init, ArgsBag.Empty, "DLL");
 
-    public nint InitCallbackFunc(nint callbackFuncPtr, int callbackId) => LogMethod(() => target.InitCallbackFunc(callbackFuncPtr, callbackId), ArgsBag.Init(callbackFuncPtr, callbackId), "DLL");
+    public nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId) => LogMethod(() => target.InitCallbackFunc(callbackFuncPtr, callbackId), ArgsBag.Init(callbackFuncPtr, callbackId), "DLL");
 
     /// <summary>
     /// Do not log: called every frame

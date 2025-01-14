@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using SwApiNet.Wrappers.Dll;
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Steam;
 
 namespace SwApiNet.Wrappers;
 
@@ -23,7 +24,7 @@ public static class Imports
     public static extern int SW_CCSys_Init();
 
     [DllImport("sw_api_original.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern nint SW_CCSys_InitCallbackFunc(nint x, int y);
+    public static extern nint SW_CCSys_InitCallbackFunc(nint x, CallbackType y);
 
     [DllImport("sw_api_original.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern int SW_CCSys_ProcessApiCb();
