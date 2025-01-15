@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using SwApiNet.Wrappers.Dll;
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Enums;
 using SwApiNet.Wrappers.Models.Steam;
 
 namespace SwApiNet.Wrappers;

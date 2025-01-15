@@ -19,7 +19,7 @@ using SwApiNet.Codegen;
 
 namespace Test;
 
-[VTableProxy]
+[StaticVTableProxy]
 public unsafe interface ISteamClientVTable
 {
     //nint Orange(void* thisPtr, HSteamUser user, HSteamPipe pipe, byte* versionStr);

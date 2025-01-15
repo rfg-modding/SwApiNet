@@ -1,3 +1,3 @@
 namespace SwApiNet.Wrappers.Models.Enums;
 
-public enum SNetListenSocket : uint;
+public enum CallbackFlags : byte;

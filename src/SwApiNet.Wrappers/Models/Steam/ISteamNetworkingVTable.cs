@@ -1,8 +1,10 @@
 using SwApiNet.Codegen;
+using SwApiNet.Wrappers.Models.Enums;
+using SwApiNet.Wrappers.Models.Structs;
 
 namespace SwApiNet.Wrappers.Models.Steam;
 
-[VTableProxy]
+[StaticVTableProxy]
 public unsafe interface ISteamNetworkingVTable
 {
     int SendP2PPacket(SteamNetworking* thisPtr, CSteamID steamIDRemote, void* pubData, uint cubData, P2PSend eP2PSendType, int nChannel);

@@ -1,4 +1,5 @@
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Enums;
 
 namespace SwApiNet.Wrappers.Dll;
 
@@ -6,7 +7,7 @@ public interface IDllWrapper
 {
     nint CreateInternalModule(nint cStringPtr);
 
-    nint DynamicInit(nint callbackCounterAndContextPtr);
+    nint DynamicInit(nint contextPtr);
 
     nint GetPInterface();
 
@@ -15,12 +16,12 @@ public interface IDllWrapper
     /// <returns>bool is not blittable, have to return int</returns>
     int Init();
 
-    nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId);
+    nint InitCallbackFunc(nint callPtr, CallbackType type);
 
     void ProcessApiCb();
 
 
-    void RegisterCallResult(nint cCallResultPtr, ulong maybeId);
+    void RegisterCallResult(nint callResultPtr, ulong maybeId);
 
 
     void RemoveCallbackFunc(nint callbackFuncPtr);

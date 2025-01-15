@@ -1,8 +1,9 @@
 using SwApiNet.Codegen;
+using SwApiNet.Wrappers.Models.Enums;
 
 namespace SwApiNet.Wrappers.Models.Steam;
 
-[VTableProxy]
+[StaticVTableProxy]
 public unsafe interface ISteamMatchmakingVTable
 {
     int GetFavoriteGameCount(SteamMatchmaking* thisPtr);

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SwApiNet.Wrappers.Models;
+namespace SwApiNet.Wrappers.Models.Structs;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct P2PSessionState

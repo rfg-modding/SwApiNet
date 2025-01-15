@@ -1,6 +1,10 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Enums;
 using SwApiNet.Wrappers.Models.Steam;
+using SwApiNet.Wrappers.Utils;
 
 namespace SwApiNet.Wrappers.Dll ;
 
@@ -15,21 +19,16 @@ public unsafe class DllInterceptWrapper : IDllWrapper
     {
         countGuard.Check(1);
         var steamClientDll = Imports.SW_CCSys_CreateInternalModule(cStringPtr);
-        // allocate unmanaged memory. VTables are static and can be cached forever, no freeing required
-        SteamClient* fake = (SteamClient*)Marshal.AllocHGlobal(sizeof(SteamClient));
-        fake->Table = (SteamClient.VTable*) Marshal.AllocHGlobal(sizeof(SteamClient.VTable));
-        // init proxy struct and related stuff
-        Marshal.StructureToPtr(new SteamClient.VTable(steamClientDll->Table), (nint)fake->Table, true);
-        return (nint)fake;
+        return SteamClient.Hijack(steamClientDll);
     }
 
     /// <summary>
     /// Gets called a lot
     /// </summary>
-    public nint DynamicInit(nint callbackCounterAndContextPtr)
+    public nint DynamicInit(nint contextPtr)
     {
         // TODO cache result and return it
-        return Imports.SW_CCSys_DynamicInit(callbackCounterAndContextPtr);
+        return Imports.SW_CCSys_DynamicInit(contextPtr);
     }
 
     public nint GetPInterface()
@@ -50,11 +49,20 @@ public unsafe class DllInterceptWrapper : IDllWrapper
         return Imports.SW_CCSys_Init();
     }
 
-    public nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId)
+    public nint InitCallbackFunc(nint callPtr, CallbackType type)
     {
         countGuard.Check(12);
-        // TODO manage init callback + register result
-        return Imports.SW_CCSys_InitCallbackFunc(callbackFuncPtr, callbackId);
+        var real = (Callback*) callPtr;
+        var fake = (Callback*) Callback.Hijack(real);
+        var info = new Callback.CallbackInfo(nameof(InitCallbackFunc), type);
+        Log.LogDebug($"DLL registered: {info}");
+        Callback.Interop.DataByFakeVTable[(nint) fake->Table] = info;
+        // game crashes if object is replaced entirely. hijacking only vtable
+        real->Table = fake->Table;
+        return Imports.SW_CCSys_InitCallbackFunc(callPtr, type);
+
+        // looks like doesnt matter what we return?
+        //return 0;
     }
 
     /// <summary>
@@ -68,9 +76,16 @@ public unsafe class DllInterceptWrapper : IDllWrapper
     /// <summary>
     /// Gets called when entering "custom match with party"
     /// </summary>
-    public void RegisterCallResult(nint cCallResultPtr, ulong maybeId)
+    public void RegisterCallResult(nint callResultPtr, ulong maybeId)
     {
-        Imports.SW_CCSys_RegisterCallResult(cCallResultPtr, maybeId);
+        var real = (Callback*) callResultPtr;
+        var fake = (Callback*) Callback.Hijack(real);
+        var info = new Callback.CallResultInfo(nameof(RegisterCallResult), maybeId);
+        Log.LogDebug($"DLL registered: {info}");
+        Callback.Interop.DataByFakeVTable[(nint) fake->Table] = info;
+        // game gets stuck if object is replaced entirely. hijacking only vtable
+        real->Table = fake->Table;
+        Imports.SW_CCSys_RegisterCallResult(callResultPtr, maybeId);
     }
 
     /// <summary>
@@ -92,6 +107,7 @@ public unsafe class DllInterceptWrapper : IDllWrapper
     /// </summary>
     public void UnregisterCallResult(nint cCallResultPtr, nint field1Ptr, nint field2Ptr)
     {
+        // got here once when closed game window mid-joining lobby
         throw new InvalidOperationException("How did you get here?");
     }
 

@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace SwApiNet.Wrappers;
+namespace SwApiNet.Wrappers.Utils;
 
 public class CallCountGuard
 {

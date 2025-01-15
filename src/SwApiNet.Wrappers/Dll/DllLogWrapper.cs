@@ -1,4 +1,6 @@
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Enums;
+using SwApiNet.Wrappers.Utils;
 
 namespace SwApiNet.Wrappers.Dll;
 
@@ -16,12 +18,12 @@ public class DllLogWrapper(IDllWrapper target) : IDllWrapper
     /// <summary>
     /// Log once and avoid spam because real method doesn't do anything after first call
     /// </summary>
-    public nint DynamicInit(nint callbackCounterAndContextPtr)
+    public nint DynamicInit(nint contextPtr)
     {
         var skip = logDynamicInitOnce && dynamicInitCalled;
         dynamicInitCalled = true;
-        var args = ArgsBag.Init(callbackCounterAndContextPtr);
-        return LogMethod(() => target.DynamicInit(callbackCounterAndContextPtr), args, "DLL", skip);
+        var args = ArgsBag.Init(contextPtr);
+        return LogMethod(() => target.DynamicInit(contextPtr), args, "DLL", skip);
     }
 
     public nint GetPInterface() => LogMethod(target.GetPInterface, ArgsBag.Empty, "DLL");
@@ -30,14 +32,14 @@ public class DllLogWrapper(IDllWrapper target) : IDllWrapper
 
     public int Init() => LogMethod(target.Init, ArgsBag.Empty, "DLL");
 
-    public nint InitCallbackFunc(nint callbackFuncPtr, CallbackType callbackId) => LogMethod(() => target.InitCallbackFunc(callbackFuncPtr, callbackId), ArgsBag.Init(callbackFuncPtr, callbackId), "DLL");
+    public nint InitCallbackFunc(nint callPtr, CallbackType type) => LogMethod(() => target.InitCallbackFunc(callPtr, type), ArgsBag.Init(callPtr, type), "DLL");
 
     /// <summary>
     /// Do not log: called every frame
     /// </summary>
     public void ProcessApiCb() => LogMethod(target.ProcessApiCb, ArgsBag.Empty, "DLL", muteProcessApiCb);
 
-    public void RegisterCallResult(nint cCallResultPtr, ulong maybeId) => LogMethod(() => target.RegisterCallResult(cCallResultPtr, maybeId), ArgsBag.Init(cCallResultPtr, maybeId), "DLL");
+    public void RegisterCallResult(nint callResultPtr, ulong maybeId) => LogMethod(() => target.RegisterCallResult(callResultPtr, maybeId), ArgsBag.Init(callResultPtr, maybeId), "DLL");
 
     public void RemoveCallbackFunc(nint callbackFuncPtr) => LogMethod(() => target.RemoveCallbackFunc(callbackFuncPtr), ArgsBag.Init(callbackFuncPtr), "DLL");
 

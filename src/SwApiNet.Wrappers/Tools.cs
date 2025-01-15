@@ -11,15 +11,22 @@ using NLog.Layouts;
 using NLog.Targets;
 using SwApiNet.Wrappers.Dll;
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Utils;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = NLog.LogLevel;
 
 namespace SwApiNet.Wrappers;
 
+/// <summary>
+/// Globally available static functions
+/// </summary>
 public static class Tools
 {
     public static readonly ILogger Log;
+
     private static readonly ILogger LogInternal;
+
+    private static readonly LogLevel LogLevel = LogLevel.Trace;
 
     static Tools()
     {
@@ -37,7 +44,7 @@ public static class Tools
                         ArchiveOldFileOnStartup = true
                     })
                     .WithAsync();
-                c.ForLogger().FilterMinLevel(LogLevel.Trace).WriteTo(target);
+                c.ForLogger().FilterMinLevel(LogLevel).WriteTo(target);
             });
         var factory = new NLogLoggerFactory();
         Log = new Logger<LogAll>(factory);
@@ -49,7 +56,7 @@ public static class Tools
 
     private record LogForMethods;
 
-    // TODO: when return type is pointer, this method blocks from writing vtable signatures. fix somehow?
+    // TODO: when return type is pointer, this method blocks from writing nice vtable signatures. fix somehow?
     public static T LogMethod<T>(Func<T> action, ArgsBag args, string origin, bool exceptionsOnly=false, [CallerMemberName] string? method = null)
     {
         var sb = new StringBuilder();
@@ -90,6 +97,11 @@ public static class Tools
             action();
             return typeof(void); // not a value, just a type, but works anyway
         }
+    }
+
+    public static unsafe string Serialize(void* o)
+    {
+        return Serialize((nint) o);
     }
 
     public static string Serialize(object? o)

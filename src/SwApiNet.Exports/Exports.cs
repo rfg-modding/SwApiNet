@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using SwApiNet.Wrappers.Dll;
 using SwApiNet.Wrappers.Models;
+using SwApiNet.Wrappers.Models.Enums;
 
 namespace SwApiNet;
 

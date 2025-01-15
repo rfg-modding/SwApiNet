@@ -3,7 +3,7 @@ using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace SwApiNet.Wrappers;
+namespace SwApiNet.Wrappers.Utils;
 
 public class ArgsBag
 {

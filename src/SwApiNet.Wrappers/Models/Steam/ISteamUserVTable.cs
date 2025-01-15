@@ -1,8 +1,9 @@
 using SwApiNet.Codegen;
+using SwApiNet.Wrappers.Models.Enums;
 
 namespace SwApiNet.Wrappers.Models.Steam;
 
-[VTableProxy]
+[StaticVTableProxy]
 public unsafe interface ISteamUserVTable
 {
     HSteamUser SW_CCSys_GetU(SteamUser* thisPtr);
@@ -41,9 +42,4 @@ public unsafe interface ISteamUserVTable
     int BIsTwoFactorEnabled(SteamUser* thisPtr);
     int BIsPhoneIdentifying(SteamUser* thisPtr);
     int BIsPhoneRequiringVerification(SteamUser* thisPtr);
-    /*nint RequestStoreAuthURL { get; }
-    nint BIsPhoneVerified { get; }
-    nint BIsTwoFactorEnabled { get; }
-    nint BIsPhoneIdentifying { get; }
-    nint BIsPhoneRequiringVerification { get; }*/
 }

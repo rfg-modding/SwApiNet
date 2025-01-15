@@ -1,6 +1,6 @@
 namespace SwApiNet.Codegen;
 
-public readonly record struct DataToGenerate(string InterfaceName, string Namespace, RecordArray<Member> Functions)
+public readonly record struct DataToGenerate(string InterfaceName, string Namespace, RecordArray<Member> Functions, bool IsDynamic)
 {
     private readonly string VTableName = $"{InterfaceName.Substring(1)}";
     public string ParentType => VTableName.Replace("VTable", "").Split('.').Last();
@@ -11,5 +11,3 @@ public readonly record struct DataToGenerate(string InterfaceName, string Namesp
     public GeneratedResult Failure(string error) => new GeneratedResult(FileName, null, error);
     public GeneratedResult Success(string text) => new GeneratedResult(FileName, text, null);
 }
-
-public readonly record struct GeneratedResult(string Filename, string? Content, string? Error);
