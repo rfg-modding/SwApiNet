@@ -30,6 +30,7 @@ All this is automated, run `bash publish.sh`. If RFG is not in default folder, e
 ## TODO
 
 * Port types from [Beef-lang implementation](https://github.com/rfg-modding/RfgNetworking)
+* Carefully realign struct fields according to MSVC++ rules
 * Actually figure out how to hack netcode to avoid encryption and/or master server talk
 
 ## Notes

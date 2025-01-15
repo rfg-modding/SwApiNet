@@ -57,7 +57,7 @@ public unsafe class DllInterceptWrapper : IDllWrapper
         var info = new Callback.CallbackInfo(nameof(InitCallbackFunc), type);
         Log.LogDebug($"DLL registered: {info}");
         Callback.Interop.DataByFakeVTable[(nint) fake->Table] = info;
-        // game crashes if object is replaced entirely. hijacking only vtable
+        // game crashes if object is replaced entirely because its signature is incomplete. hijacking only vtable
         real->Table = fake->Table;
         return Imports.SW_CCSys_InitCallbackFunc(callPtr, type);
 
@@ -78,12 +78,12 @@ public unsafe class DllInterceptWrapper : IDllWrapper
     /// </summary>
     public void RegisterCallResult(nint callResultPtr, ulong maybeId)
     {
-        var real = (Callback*) callResultPtr;
-        var fake = (Callback*) Callback.Hijack(real);
-        var info = new Callback.CallResultInfo(nameof(RegisterCallResult), maybeId);
+        var real = (CallResult*) callResultPtr;
+        var fake = (CallResult*) CallResult.Hijack(real);
+        var info = new CallResult.CallResultInfo(nameof(RegisterCallResult), maybeId);
         Log.LogDebug($"DLL registered: {info}");
-        Callback.Interop.DataByFakeVTable[(nint) fake->Table] = info;
-        // game gets stuck if object is replaced entirely. hijacking only vtable
+        CallResult.Interop.DataByFakeVTable[(nint) fake->Table] = info;
+        // game crashes if object is replaced entirely because its signature is incomplete. hijacking only vtable
         real->Table = fake->Table;
         Imports.SW_CCSys_RegisterCallResult(callResultPtr, maybeId);
     }
